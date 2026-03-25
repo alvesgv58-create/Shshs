@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFH4X MINEIRO - PANEL</title>
+    <style>
+        :root {
+            --primary: #ffcc00; /* Amarelo Mineiro */
+            --bg: #121212;
+            --panel-bg: #1e1e1e;
+            --text: #ffffff;
+            --accent: #2ecc71;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: transparent;
+            color: var(--text);
+            user-select: none;
+        }
+
+        /* Botão para mostrar/esconder o painel */
+        #floating-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+            z-index: 1000;
+            font-weight: bold;
+            color: #000;
+            border: 2px solid #fff;
+        }
+
+        /* Container Principal do Painel */
+        #main-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            display: none; /* Começa escondido */
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 999;
+        }
+
+        .panel-header {
+            background: var(--primary);
+            color: #000;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header span { cursor: pointer; padding: 0 10px; }
+
+        /* Abas */
+        .tabs {
+            display: flex;
+            background: #252525;
+            border-bottom: 1px solid #333;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            background: #2a2a2a;
+        }
+
+        /* Conteúdo das Funções */
+        .content {
+            padding: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .function-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            background: #2a2a2a;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        /* Switches (Interruptores) */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        input:checked + .slider { background-color: var(--primary); }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Sliders (Barras de Rolagem) */
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+            margin-top: 5px;
+        }
+
+        /* Botões de Seleção (Cabeça, Pescoço, Peito) */
+        .aim-selector {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .aim-btn {
+            flex: 1;
+            padding: 8px;
+            background: #333;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .aim-btn.selected {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Botão Injetar */
+        #inject-btn {
+            width: 90%;
+            margin: 15px auto;
+            padding: 12px;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        #inject-btn:active { transform: scale(0.95); }
+        #inject-btn.loading { background: #888; cursor: wait; }
+        #inject-btn.success { background: var(--accent); color: white; }
+
+        /* Scrollbar Style */
+        .content::-webkit-scrollbar { width: 5px; }
+        .content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Ícone Flutuante -->
+    <div id="floating-icon" onclick="togglePanel()">MINEIRO</div>
+
+    <!-- Painel Principal -->
+    <div id="main-panel">
+        <div class="panel-header">
+            FFH4X MINEIRO
+            <span onclick="togglePanel()">×</span>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-btn active" onclick="openTab(event, 'aimbot')">AIMBOT</div>
+            <div class="tab-btn" onclick="openTab(event, 'visual')">VISUAL</div>
+            <div class="tab-btn" onclick="openTab(event, 'outro')">OUTROS</div>
+        </div>
+
+        <div class="content">
+            <!-- ABA AIMBOT -->
+            <div id="aimbot" class="tab-content active">
+                <div class="function-item">
+                    <span>Aimbot Auxiliar</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                
+                <label>Foco da Mira:</label>
+                <div class="aim-selector">
+                    <button class="aim-btn mod-control" onclick="selectAim(this, 'Cabeça')">CABEÇA</button>
+                    <button class="aim-btn mod-control" onclick="selectAim(this, 'Pescoço')">PESCOÇO</button>
+                    <button class="aim-btn mod-control" onclick="selectAim(this, 'Peito')">PEITO</button>
+                </div>
+
+                <div style="margin-top:15px;">
+                    <span>Sensibilidade Aimbot: <b id="sens-val">50</b></span>
+                    <input type="range" min="0" max="100" value="50" class="mod-control" oninput="document.getElementById('sens-val').innerText = this.value">
+                </div>
+
+                <div class="function-item" style="margin-top:10px;">
+                    <span>Ajuste FOV</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <!-- ABA VISUAL -->
+            <div id="visual" class="tab-content">
+                <div class="function-item">
+                    <span>ESP Linha</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>ESP Box (Caixa)</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>ESP Nome/Distância</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>Wallhack (Ver pelas paredes)</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <!-- ABA OUTROS -->
+            <div id="outro" class="tab-content">
+                <div class="function-item">
+                    <span>Velocidade de Corrida</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>Pulo Duplo</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>Céu Preto (No Sky)</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>Night Mode</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>Ghost Mode</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+                <div class="function-item">
+                    <span>Medkit Correndo</span>
+                    <label class="switch"><input type="checkbox" class="mod-control"><span class="slider"></span></label>
+                </div>
+            </div>
+        </div>
+
+        <button id="inject-btn" onclick="injectCodes()">Injetar</button>
+    </div>
+
+    <script>
+        // Função para Abrir/Fechar Painel
+        function togglePanel() {
+            const panel = document.getElementById('main-panel');
+            if (panel.style.display === 'flex') {
+                panel.style.display = 'none';
+            } else {
+                panel.style.display = 'flex';
+            }
+        }
+
+        // Função para Trocar de Abas
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.className += " active";
+        }
+
+        // Seleção de Botão de Mira (Cabeça, Pescoço, Peito)
+        function selectAim(btn, part) {
+            const buttons = document.querySelectorAll('.aim-btn');
+            buttons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        // Lógica de Injeção
+        function injectCodes() {
+            const btn = document.getElementById('inject-btn');
+            
+            // Alterar para Injetando...
+            btn.innerText = "Injetando código...";
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Após 5 segundos
+                btn.innerText = "Códigos injetados com sucesso";
+                btn.classList.remove('loading');
+                btn.classList.add('success');
+                btn.disabled = false;
+            }, 5000);
+        }
+
+        // Função para Resetar Botão de Injetar
+        function resetInjectBtn() {
+            const btn = document.getElementById('inject-btn');
+            btn.innerText = "Injetar";
+            btn.classList.remove('success', 'loading');
+            btn.disabled = false;
+        }
+
+        // Adiciona evento em todos os controles para resetar o botão de injeção ao mexer
+        const controls = document.querySelectorAll('.mod-control');
+        controls.forEach(control => {
+            // Monitora cliques e mudanças em sliders/checkboxes
+            control.addEventListener('input', resetInjectBtn);
+            control.addEventListener('click', resetInjectBtn);
+        });
+
+    </script>
+</body>
+</html>
